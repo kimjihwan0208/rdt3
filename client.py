@@ -9,36 +9,60 @@ try:
   #Address Family IPv4, SOCK_STREAM is TCP, SOCK_DGRAM is UDP
   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 except socket.error as msg:
-  print("Failed to create socket. Error code: " + str(msg[0]) + " , Error message : " + msg[1])
-  sys.exit()
+  print 'Failed to create socket. Error code: ' + str(msg[0]) + ' , Error message : ' + msg[1]
+  sys.exit() 
 
-print ("Socket Created")
+print "Socket Created"
 
 #defining host and ip
 host = "localhost"
-port = 5050
+port = 5000
+timeout = 2
 
 waitCall0 = True
-waitAck0 = False
-waitCall1 = False
-waitAck1 = False
 
 def make_pkt(id,checksum,msg):   
-  sndpkt = bytearray(id)
-  sndpkt.append(checksum)
-  sndpkt.append(msg)
-  return sndpkt  
+  sndpkt = id + msg + checksum
+  return sndpkt
 
-while(1) :
+def send_pkt(sndpkt, id):
+  s.sendto(sndpkt, (host,port))
+  d = s.recvfrom(1024)
+  data = d[0]
+  #print data
+  while data[0] != id: # or sndpkt[-2:] != data[1:]:
+    d = s.recvfrom(1024)
+    data = d[0]
+
+while(1):
     if waitCall0:
-      msg = input("Enter message to send : ")
-    
-      sndpkt = make_pkt(b"0",ip_checksum(msg), str.encode(msg))
-    
-      t = Timer(1, s.sendto(sndpkt, (host,port)))
+      msg = raw_input("Enter message to send : ")
+      sndpkt = make_pkt("0",ip_checksum(msg), msg)
+
+      #do-while
+      t = threading.Thread(target=send_pkt, args=(sndpkt,"0"))
       t.start()
-    try:
-      d = s.recvfrom(1024)
-      if d[0] != 0:
-        
-    except timeout:
+      t.join(timeout)
+      while t.isAlive():
+        t = threading.Thread(target=send_pkt, args=(sndpkt,"0"))
+        t.start()
+        t.join(timeout)
+      
+      waitCall0 = False
+
+    else:
+      msg = raw_input("Enter message to send : ")
+      sndpkt = make_pkt("1",ip_checksum(msg), msg)
+
+      #do-while
+      t = threading.Thread(target=send_pkt, args=(sndpkt,"1"))
+      t.start()
+      t.join(timeout)
+      while t.isAlive():
+        t = threading.Thread(target=send_pkt, args=(sndpkt,"1"))
+        t.start()
+        t.join(timeout)
+      
+      waitCall0 = True
+
+s.close()
