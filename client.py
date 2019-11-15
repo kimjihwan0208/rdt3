@@ -75,6 +75,9 @@ while(1):
         t.join(timeout)
         while t.isAlive(): #timed out
           send_pkt(packets[base], base)
+          send_pkt(packets[base+1], base+1)
+          send_pkt(packets[base+2], base+2)
+          send_pkt(packets[base+3], base+3)
           t = threading.Thread(target=listen_ack, args=(base))
           t.start()
           t.join(timeout)
