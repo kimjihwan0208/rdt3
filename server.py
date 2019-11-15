@@ -19,52 +19,28 @@ except socket.error as msg:
 
 print "socket bind complete"
 
-wait0 = True
+i="0"
 
 while 1:
-  if wait0:
-    while 1:
-      d = s.recvfrom(1024)
-      data = d[0]
-      addr = d[1]
+  d = s.recvfrom(1024)
+  data = d[0]
+  addr = d[1]
       
       # if ip_checksum(data[1:]):
       #   reply = "1" + ip_checksum(data[1:])
       #   s.sendto(reply, addr)
 
-      if data[0] == "1": #should be elif
-        reply = "1" + ip_checksum(data[1:])
-        s.sendto(reply, addr)
-
-      else:
-        break
-
-    print "Message[" + addr[0] + ":" + str(addr[1]) + "] - " + data[1:-2]
-    reply = "0" + ip_checksum(data[1:])
+  if data[0] == i: #should be elif
+    reply = "i" + ip_checksum(data[1:])
     s.sendto(reply, addr)
-    wait0 = False
-  
+    i = str(int(i) + 1)
+
   else:
-    while 1:
-      d = s.recvfrom(1024)
-      data = d[0]
-      addr = d[1]
-      
-      # if corrupt:
-      #  reply = "1" + ip_checksum(data[1:])
-      #  s.sendto(reply, addr)
+    break
 
-      if data[0] == "0": #should be elif
-        reply = "0" + ip_checksum(data[1:])
-        s.sendto(reply, addr)
-
-      else:
-        break
-    #print data
-    print "Message[" + addr[0] + ":" + str(addr[1]) + "] - " + data[1:-2]
-    reply = "1" + ip_checksum(data[1:])
-    s.sendto(reply, addr)
-    wait0 = True
+  print "Message[" + addr[0] + ":" + str(addr[1]) + "] - " + data[1:-2]
+  reply = "0" + ip_checksum(data[1:])
+  s.sendto(reply, addr)
 
 
 s.close()
